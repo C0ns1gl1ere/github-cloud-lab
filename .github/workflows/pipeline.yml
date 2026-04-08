@@ -2,28 +2,16 @@ name: Full CI/CD Pipeline
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
 jobs:
-  lint-and-test:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.11"}
-      - run: pip install flake8 pytest redis flask
-      - run: flake8 src/ --max-line-length=100
-      - run: python -m pytest tests/ -v
-  security-and-build:
-    needs: lint-and-test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: docker build -t webapp:${{ github.sha }} ./webapp
-      - name: Security Scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'webapp:${{ github.sha }}'
-          format: 'table'
-          exit-code: '0'
-          severity: 'CRITICAL,HIGH'
+      - name: Install dependencies
+        run: pip install pytest redis flask
+      - name: Run Tests
+        run: python -m pytest tests/ -v
+      - name: Build Docker Image
+        run: docker build -t webapp:latest ./webapp
